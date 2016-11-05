@@ -5,7 +5,7 @@ To reproduce run
 
 **ant**
 
-Remember to set ivy.cache.dir=/path/to/your/ivy/cache/dir in your build-local.properties file (create it first).
+Remember to set **ivy.cache.dir**=*/path/to/your/ivy/cache/dir* in your build-local.properties file (create it first).
 
 The output will be similar to
 ```
