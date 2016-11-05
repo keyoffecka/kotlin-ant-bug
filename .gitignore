@@ -1,0 +1,8 @@
+/*-local.properties
+/target
+/lib/compile
+/lib/test
+/lib/tool
+/lib/ext/kotlin-compiler.jar
+/lib/ext/kotlin-runtime.jar
+/lib/ext/kotlin-reflect.jar
