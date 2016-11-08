@@ -15,9 +15,9 @@
     <dependency org="org.jetbrains.kotlin" name="kotlin-runtime" rev="${kotlin.version}" conf="compile"/>
     <dependency org="org.jetbrains.kotlin" name="kotlin-stdlib" rev="${kotlin.version}" conf="compile"/>
 
-	  <dependency org="junit" name="junit" rev="${junit.version}" conf="test"/>
+    <dependency org="junit" name="junit" rev="${junit.version}" conf="test"/>
     <dependency org="org.mockito" name="mockito-core" rev="${mockito.version}" conf="test"/>
-	  <dependency org="org.hamcrest" name="java-hamcrest" rev="${java-hamcrest.version}" conf="test"/>
+    <dependency org="org.hamcrest" name="java-hamcrest" rev="${java-hamcrest.version}" conf="test"/>
     <dependency org="org.objenesis" name="objenesis" rev="${objenesis.version}" conf="test"/>
 
     <dependency org="org.jetbrains.kotlin" name="kotlin-compiler" rev="${kotlin.version}" conf="tool"/>

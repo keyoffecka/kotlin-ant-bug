@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="kotlin-ant-bug" default="package" xmlns:ivy="antlib:org.apache.ivy.ant">
+  <tstamp>
+    <format property="timestamp" pattern="yyyyMMddHHmmssSSS" locale="en"/>
+  </tstamp>
+
+  <property name="parent.prj.dir" value="${basedir}"/>
+
+  <property file="${basedir}/version-local.properties"/>
+  <property file="${basedir}/version.properties"/>
+
+  <property file="${basedir}/base-local.properties"/>
+  <property file="${basedir}/base.properties"/>
+  <property file="${basedir}/build-local.properties"/>
+  <property file="${basedir}/build.properties"/>
+
+  <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant">
+    <classpath>
+      <fileset dir="${ext.lib.dir}" includes="ivy-*.jar"/>
+    </classpath>
+  </taskdef>
+
+  <available property="has.ivy.cache.dir" file="${ivy.cache.dir}"/>
+
+  <fail unless="has.ivy.cache.dir" message="Please set ivy.cache.dir=/path/to/your/ivy/cache/dir in your build-local.properties file."/>
+
+  <ivy:configure file="ivysettings.xml"/>
+
+  <target name="show-dep">
+    <ivy:dependencytree conf="compile"/>
+  </target>
+
+  <target name="init" description="Creates directories not existing in the repository">
+    <mkdir dir="${compile.lib.dir}"/>
+    <mkdir dir="${test.lib.dir}"/>
+    <mkdir dir="${tool.lib.dir}"/>
+    <mkdir dir="${classes.dir}"/>
+    <mkdir dir="${test.classes.dir}"/>
+    <mkdir dir="${target.reports.dir}"/>
+  </target>
+
+  <target name="clean" depends="init" description="Deletes all created files">
+    <delete includeemptydirs="true">
+      <fileset dir="${compile.lib.dir}" includes="**/*"/>
+      <fileset dir="${test.lib.dir}" includes="**/*"/>
+      <fileset dir="${tool.lib.dir}" includes="**/*"/>
+    </delete>
+    <delete dir="${classes.dir}" includes="**/*" includeemptydirs="true"/>
+    <delete dir="${test.classes.dir}" includes="**/*" includeemptydirs="true"/>
+    <delete dir="${target.reports.dir}" includes="**/*" includeemptydirs="true"/>
+    <delete file="${ext.lib.dir}/kotlin-compiler.jar"/>
+    <delete file="${ext.lib.dir}/kotlin-runtime.jar"/>
+    <delete file="${ext.lib.dir}/kotlin-reflect.jar"/>
+  </target>
+
+  <target name="retrieve" description="Retrieves java dependencies">
+    <ivy:retrieve conf="compile"
+                  type="source,jar,bundle"
+                  pattern="${compile.lib.dir}/([classifier])/[module]-[revision](-[classifier]).[ext]"
+                  transitive="false"
+                  sync="false"/>
+
+    <ivy:retrieve conf="test"
+                  type="source,jar,bundle"
+                  pattern="${test.lib.dir}/([classifier])/[module]-[revision](-[classifier]).[ext]"
+                  transitive="false"
+                  sync="false"/>
+
+    <ivy:retrieve conf="tool"
+                  type="source,jar,bundle"
+                  pattern="${tool.lib.dir}/([classifier])/[module]-[revision](-[classifier]).[ext]"
+                  transitive="false"
+                  sync="false"/>
+
+
+    <!--
+      Another genius idea of stupid idiots.
+      Ok. The Ant task loads some jars bypassing JRE.
+      But why to hardcode the names?
+      Why to hardcode the location of the folder where they are located?
+      Why not to configure them from within the Ant task itself?
+
+      See https://github.com/JetBrains/kotlin/blob/1.0.4/ant/src/org/jetbrains/kotlin/ant/KotlinAntTaskUtil.kt
+      lines 30, 40, 41, 42
+    -->
+    <copy file="${tool.lib.dir}/kotlin-compiler-${kotlin.version}.jar" tofile="${ext.lib.dir}/kotlin-compiler.jar" verbose="true" failonerror="true"/>
+    <copy file="${tool.lib.dir}/kotlin-reflect-${kotlin.version}.jar" tofile="${ext.lib.dir}/kotlin-reflect.jar" verbose="true" failonerror="true"/>
+    <copy file="${compile.lib.dir}/kotlin-runtime-${kotlin.version}.jar" tofile="${ext.lib.dir}/kotlin-runtime.jar" verbose="true" failonerror="true"/>
+  </target>
+
+  <target name="compile" depends="init">
+    <typedef resource="org/jetbrains/kotlin/ant/antlib.xml">
+      <classpath>
+        <!--
+          The stupid idiots do not deploy kotlin-ant to Central Repository,
+          so we have to include it as a bootstrap dependency.
+        -->
+        <pathelement location="${ext.lib.dir}/kotlin-ant.jar"/>
+        <pathelement location="${ext.lib.dir}/kotlin-preloader.jar"/>
+        <pathelement location="${ext.lib.dir}/kotlin-runtime.jar"/>
+        <pathelement location="${ext.lib.dir}/kotlin-compiler.jar"/>
+      </classpath>
+    </typedef>
+
+    <javac destdir="${classes.dir}" includeAntRuntime="false" debug="true" debuglevel="lines,vars,source">
+      <src path="${kotlin.dir}"/>
+      <withKotlin/>
+      <classpath>
+        <fileset dir="${compile.lib.dir}" includes="*.jar"/>
+      </classpath>
+    </javac>
+    <javac destdir="${test.classes.dir}" includeAntRuntime="false">
+      <src path="${test.kotlin.dir}"/>
+      <withKotlin>
+        <compilerarg line=""/>
+      </withKotlin>
+      <classpath>
+        <fileset dir="${compile.lib.dir}" includes="*.jar"/>
+        <fileset dir="${test.lib.dir}" includes="*.jar"/>
+        <pathelement location="${classes.dir}"/>
+      </classpath>
+    </javac>
+  </target>
+
+  <target name="test">
+    <junit fork="true" forkmode="once" haltonfailure="true">
+      <formatter type="plain"/>
+      <batchtest todir="${target.reports.dir}">
+        <fileset dir="${test.classes.dir}" includes="**/*Test.class"/>
+      </batchtest>
+      <classpath>
+        <fileset dir="${compile.lib.dir}" includes="*.jar"/>
+        <fileset dir="${test.lib.dir}" includes="*.jar"/>
+        <pathelement location="${classes.dir}"/>
+        <pathelement location="${test.classes.dir}"/>
+      </classpath>
+    </junit>
+  </target>
+
+  <target name="jar">
+    <jar destfile="${target.dir}/${kotlin-ant-bug.jar.name}">
+      <fileset dir="${classes.dir}"/>
+    </jar>
+  </target>
+
+  <target name="package" depends="clean,retrieve,compile,test,jar"/>
+</project>
