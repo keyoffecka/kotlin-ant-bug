@@ -22,8 +22,8 @@ TEST_DIR=$PWD/src/test/kotlin
 rm -fr $CLASSES_DIR || true
 rm -fr $TEST_CLASSES_DIR || true
 
-mkdir $CLASSES_DIR
-mkdir $TEST_CLASSES_DIR
+mkdir -p $CLASSES_DIR
+mkdir -p $TEST_CLASSES_DIR
 
 CP=$COMPILE_LIB_DIR/kotlin-stdlib-$KOTLIN_VERSION.jar
 
